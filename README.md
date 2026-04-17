@@ -22,6 +22,7 @@ project/
 ├── dispute case list.xlsx   # 분석 대상 리스트
 ├── .env                     # API Key 설정 파일
 └── README.md
+```
 
 ## 📁 주요 파일 상세
 1. Data (Interim & Output)
@@ -49,18 +50,24 @@ LLM 분석: 사례별 핵심 논리 요약 및 약관 근거 도출
 
 ## ⚙️ 실행 방법
 1. 환경 구성 및 패키지 설치
+``` text
 python -m venv venv
 # Windows
 venv\Scripts\activate
 # 패키지 설치
 pip install pandas openpyxl pypdf python-dotenv openai
+```
 
 2. API Key 설정
 루트 디렉토리에 .env 파일을 생성하고 키를 입력합니다.
+``` text
 OPENAI_API_KEY=your_api_key_here
+```
 
 3. 실행
+``` text
 python main.py
+```
 
 ## ⚠️ 주의사항
 매칭 실패: 파일명이 크게 다를 경우 unmatched_pdf_cases.xlsx와 로그를 확인하십시오.
