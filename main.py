@@ -41,6 +41,7 @@ client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 STRUCTURED_CASES_PATH = INTERIM_DIR / "structured_cases.json"
 LLM_CASE_SUMMARIES_PATH = INTERIM_DIR / "llm_case_summaries.json"
 FINAL_INSIGHTS_PATH = OUTPUT_DIR / "final_insights.json"
+CASE_SUMMARY_TABLE_PATH = OUTPUT_DIR / "case_summary_table.xlsx"
 
 # =========================
 # 2. PDF 섹션 패턴
@@ -72,6 +73,18 @@ def load_json(path: Path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+def save_case_summaries_to_excel(case_summaries: list[dict], path: Path) -> None:
+    df = pd.DataFrame(case_summaries)
+
+    # 리스트 컬럼은 엑셀에서 보기 좋게 문자열로 변환
+    list_cols = ["insurance_keywords", "dispute_tags"]
+    for col in list_cols:
+        if col in df.columns:
+            df[col] = df[col].apply(
+                lambda x: ", ".join(map(str, x)) if isinstance(x, list) else x
+            )
+
+    df.to_excel(path, index=False)
 
 def load_metadata(xlsx_path: str) -> pd.DataFrame:
     df = pd.read_excel(xlsx_path)
@@ -217,10 +230,34 @@ def build_case_prompt(case: dict) -> str:
 소비자 유의사항: {case.get("consumer_note")}
 참고자료: {case.get("reference")}
 
+[작성 규칙]
+1. 문체
+- 모든 문장은 "~다 / ~이다" 형태로 끝내라.
+- "~음", "~함"과 같은 명사형 종결은 사용하지 말라.
+- 문체를 혼용하지 말고 일관되게 유지하라.
+
+2. 내용 기준
+- 제공된 정보에 근거하여 작성하고, 추측이나 일반론은 추가하지 말라.
+- 사실관계와 판단 논리를 구분하여 작성하라.
+- 불필요한 수식어 없이 간결하게 작성하라.
+
+3. 구조
+- summary_short와 fact_pattern은 중복 없이 역할에 맞게 구분하라.
+- fact_pattern은 다음 구조를 따른다:
+  인물: 주요 당사자 정의
+  행위: 사건 흐름을 시간 순서로 하나의 문단으로 정리
+  결과: 보험사 판단과 분쟁 결과를 구분하여 작성
+- "행위:"는 한 번만 사용한다.
+
+4. 키워드
+- insurance_keywords는 3~5개의 핵심 용어로 작성한다.
+- dispute_tags는 사건 유형을 나타내는 단어 형태로 작성한다.
+
+
 아래 JSON 형식으로만 한국어로 답하라.
 {{
-  "summary_short": "3문장 이내 요약",
-  "fact_pattern": "사실관계 요약",
+  "summary_short": "3문장 이내로 사건 흐름 중심으로 간단히 요약",
+  "fact_pattern": "인물, 행위, 결과를 구분하여 구조적으로 요약",
   "core_issue": "핵심 쟁점",
   "decision_summary": "처리결과 요약",
   "decision_reasoning": "판단 논리",
@@ -377,8 +414,10 @@ def run_step2_generate_case_summaries() -> list[dict]:
             print(f"[오류] summary 생성 실패: {case.get('case_no')} / {e}")
 
     save_json(llm_case_summaries, LLM_CASE_SUMMARIES_PATH)
+    save_case_summaries_to_excel(llm_case_summaries, CASE_SUMMARY_TABLE_PATH)
 
     print(f"[저장 완료] {LLM_CASE_SUMMARIES_PATH}")
+    print(f"[저장 완료] {CASE_SUMMARY_TABLE_PATH}")
     logging.info(f"[STEP 2] 완료 - {len(llm_case_summaries)}건 저장")
 
     return llm_case_summaries
