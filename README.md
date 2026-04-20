@@ -60,7 +60,7 @@ llm_case_summaries.json → 메타 분석 → final_insights.json
 
 
 ## 🔍 주요 기능
-### 1. 지능현 pdf 매칭
+### 1. 지능형 pdf 매칭
 * 파일명 유사도 기반 매칭 (difflib)
 * 유니코드/특수문자 정규화 처리
 
