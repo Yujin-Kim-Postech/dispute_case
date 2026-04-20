@@ -15,8 +15,7 @@ project/
 │   └── output/              # 최종 분석 결과 (Excel/JSON)
 │       ├── case_summary_table.xlsx
 │       ├── final_insights.json
-│       ├── overall_insights_table.xlsx
-│       └── unmatched_pdf_cases.xlsx
+│       └── overall_insights_table.xlsx
 ├── pdf/                     # 원본 PDF 파일 폴더
 ├── main.py                  # 메인 실행 스크립트
 ├── dispute case list.xlsx   # 분석 대상 리스트
@@ -26,29 +25,59 @@ project/
 
 ## 📁 주요 파일 상세
 ### 1. Data (Interim & Output)
-* **`structured_cases.json`**: PDF에서 정규표현식으로 추출한 구조화 데이터 (민원, 쟁점, 결과 등)
-* **`llm_case_summaries.json`**: LLM이 분석한 핵심 논리, 약관 근거, 분쟁 태그 및 사례별 인사이트
+* **`structured_cases.json`**: PDF에서 텍스트를 추출하고 구조화 데이터 (민원, 쟁점, 결과 등)
+* **`llm_case_summaries.json`**: LLM이 분석한 핵심 논리, 약관 근거, 분쟁 태그 및 사례별 분석 결과
 * **`final_insights.json`**: 전체 사례를 종합 분석하여 도출한 반복 패턴 및 정책적 시사점
-* **`unmatched_pdf_cases.xlsx`**: 엑셀 리스트와 PDF 파일명이 매칭되지 않은 사례 목록
 
 ### 2. 핵심 실행 파일
 * **`main.py`**: [PDF 매칭 → 텍스트 추출 → 구조화 → LLM 요약 → 인사이트 도출] 전 과정 제어
 * **`.env`**: `OPENAI_API_KEY` 등 환경 변수 관리 파일
 
 ## 🔄 파이프라인 흐름
-* **PDF 매칭**: 유사도 기반(difflib) 자동 매칭
-* **구조화**: PDF 본문을 항목별(민원, 쟁점 등)로 자동 파싱
-* **LLM 분석**: 사례별 핵심 논리 요약 및 약관 기반 근거 도출
-* **통합 분석**: 메타 인사이트 생성 및 결과 저장 (Excel/JSON)
+### Step 1: PDF → 구조화 데이터 생성
+```
+PDF → 텍스트 추출 → 섹션 파싱 → structured_cases.json
+```
+* pypdf 기반 텍스트 추출
+* 정규표현식으로 민원/쟁점/결과 분리
+
+
+### Step 2: 사례별 LLM 요약 생성
+```
+structured_cases.json → LLM 분석 → llm_case_summaries.json
+```
+* 사례별 핵심 쟁점 및 판단 논리 도출
+* 약관 기반 판단 근거 추출
+* 분쟁 태그 및 키워드 생성
+
+### Step 3: 전체 인사이트 도출
+```
+llm_case_summaries.json → 메타 분석 → final_insights.json
+```
+* 반복 분쟁 패턴 분석
+* 소비자 오해 및 보험사 판단 기준 정리
+* 정책 및 실무적 시사점 도출
+
 
 ## 🔍 주요 기능
-* **지능형 매칭**: 공백, 특수문자, 유니코드 차이를 극복하는 정교한 파일 매칭
-* **정밀 추출**: 정규표현식을 활용하여 비정형 PDF 데이터의 구조적 분리
-* **심층 분석**: 단순 요약을 넘어 판단 논리와 보험 약관 근거를 LLM으로 분석
-* **메타 분석**: 소비자 오해 패턴 및 거시적 정책 시사점 도출
+### 1. 지능현 pdf 매칭
+* 파일명 유사도 기반 매칭 (difflib)
+* 유니코드/특수문자 정규화 처리
+
+### 2. 정밀 텍스트 구조화
+* 정규표현식을 활용한 섹션 단위 분리
+* 비정형 PDF → 구조화 JSON 변환
+
+### 3. LLM 기반 심층 분석
+* 단순 요약이 아닌 판단 논리, 약관 해석, 분쟁 태그까지 추출
+
+### 4. 메타 인사이트 도출
+* 반복 분쟁 유형 분석
+* 소비자 행동 패턴 도출
+* 정책/상품 설계 시사점 제공
 
 ## ⚙️ 실행 방법
-1. 환경 구성 및 패키지 설치
+### 1. 환경 구성 및 패키지 설치
 ``` text
 python -m venv venv
 # Windows
@@ -57,13 +86,13 @@ venv\Scripts\activate
 pip install pandas openpyxl pypdf python-dotenv openai
 ```
 
-2. API Key 설정
+### 2. API Key 설정
 루트 디렉토리에 .env 파일을 생성하고 키를 입력합니다.
 ``` text
 OPENAI_API_KEY=your_api_key_here
 ```
 
-3. 실행
+### 3. 실행
 ``` text
 python main.py
 ```
